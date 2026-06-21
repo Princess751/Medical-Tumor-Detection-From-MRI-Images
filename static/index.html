@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MRI Tumor Detection Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0a0e14;
+        --panel: #111820;
+        --border: #1c2736;
+        --text: #e6edf5;
+        --muted: #8b9cb3;
+        --accent: #2dd4bf;
+        --accent-dim: #0f3d38;
+        --warn: #fbbf24;
+        --danger: #f87171;
+        --ok: #34d399;
+        --mono: "IBM Plex Mono", monospace;
+        --sans: "IBM Plex Sans", system-ui, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: var(--sans);
+        background: radial-gradient(900px 500px at 80% -20%, #122a3a 0%, var(--bg) 60%);
+        color: var(--text);
+        min-height: 100vh;
+      }
+      header {
+        border-bottom: 1px solid var(--border);
+        background: rgba(10, 14, 20, 0.9);
+        backdrop-filter: blur(8px);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      .wrap { max-width: 1180px; margin: 0 auto; padding: 1.2rem 1.4rem; }
+      h1 { margin: 0; font-size: 1.2rem; letter-spacing: 0.03em; }
+      .sub { color: var(--muted); font-size: 0.85rem; margin-top: 0.4rem; line-height: 1.5; max-width: 780px; }
+      nav { display: flex; gap: 0.45rem; flex-wrap: wrap; margin-top: 0.9rem; }
+      nav button {
+        border: 1px solid var(--border);
+        background: var(--panel);
+        color: var(--text);
+        padding: 0.42rem 0.85rem;
+        border-radius: 999px;
+        cursor: pointer;
+        font-family: var(--sans);
+        font-size: 0.82rem;
+      }
+      nav button.active { border-color: var(--accent); background: var(--accent-dim); color: #fff; }
+      main { max-width: 1180px; margin: 0 auto; padding: 1.4rem; }
+      section.panel {
+        display: none;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel);
+        padding: 1.25rem 1.35rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      }
+      section.panel.active { display: block; }
+      h2 { margin: 0 0 1rem; font-size: 1.05rem; }
+      label {
+        display: block;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin-bottom: 0.35rem;
+      }
+      input, select {
+        width: 100%;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #0a1018;
+        color: var(--text);
+        padding: 0.55rem 0.65rem;
+        font-family: var(--mono);
+        font-size: 0.88rem;
+      }
+      .grid { display: grid; gap: 1rem; }
+      @media (min-width: 860px) { .grid.two { grid-template-columns: 1fr 1fr; } }
+      .row { margin-bottom: 0.85rem; }
+      button.primary {
+        border: none;
+        background: linear-gradient(135deg, #14b8a6, #0d9488);
+        color: #042f2e;
+        padding: 0.65rem 1.1rem;
+        border-radius: 10px;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: var(--sans);
+      }
+      button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+      button.ghost {
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--text);
+        padding: 0.5rem 0.85rem;
+        border-radius: 10px;
+        cursor: pointer;
+        font-family: var(--sans);
+      }
+      .banner {
+        border: 1px solid #3a3010;
+        background: #1a1608;
+        color: #fde68a;
+        padding: 0.75rem 0.9rem;
+        border-radius: 10px;
+        font-size: 0.84rem;
+        margin-bottom: 1rem;
+        line-height: 1.45;
+      }
+      .pill {
+        display: inline-flex;
+        padding: 0.22rem 0.55rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        border: 1px solid var(--border);
+      }
+      .pill.ok { border-color: #14532d; color: #bbf7d0; background: #052e16; }
+      .pill.warn { border-color: #713f12; color: #fde68a; background: #1c1408; }
+      .pill.bad { border-color: #7f1d1d; color: #fecaca; background: #2a0a0a; }
+      .preview, .heatmap {
+        width: 100%;
+        max-width: 360px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: #070a10;
+      }
+      .prob-row { margin-bottom: 0.55rem; }
+      .prob-label { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 0.2rem; }
+      .prob-bar {
+        height: 8px;
+        border-radius: 999px;
+        background: #0a1018;
+        overflow: hidden;
+      }
+      .prob-fill { height: 100%; background: linear-gradient(90deg, #14b8a6, #2dd4bf); border-radius: 999px; }
+      table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+      th, td { text-align: left; padding: 0.5rem 0.35rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+      th { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; }
+      .msg { font-size: 0.85rem; margin-top: 0.5rem; }
+      .msg.error { color: var(--danger); }
+      .msg.ok { color: var(--ok); }
+      .muted { color: var(--muted); }
+      ul.limitations { margin: 0.5rem 0 0; padding-left: 1.1rem; color: var(--muted); font-size: 0.82rem; line-height: 1.5; }
+      .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 0.35rem; }
+      .status-dot.ok { background: var(--ok); }
+      .status-dot.bad { background: var(--danger); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <h1>MRI Tumor Detection Assistant</h1>
+        <div class="sub">
+          Decision-support tool for radiologists: upload an MRI slice, receive multi-class tumor
+          classification with confidence scores and Grad-CAM attention overlay. Final diagnosis
+          remains with the clinician.
+        </div>
+        <div class="sub" id="healthLine" style="margin-top: 0.35rem">
+          <span class="status-dot bad"></span>Checking model status…
+        </div>
+        <nav id="tabs"></nav>
+      </div>
+    </header>
+    <main>
+      <section class="panel active" id="panel-analyze">
+        <div class="banner">
+          <strong>Clinical notice:</strong> This system is for research and decision support only.
+          It is not cleared as a medical device. All outputs require qualified radiologist review
+          and must be validated against your institution’s imaging protocols before any clinical use.
+        </div>
+        <h2>Analyze MRI scan</h2>
+        <div class="grid two">
+          <div>
+            <div class="row">
+              <label for="radId">Radiologist ID</label>
+              <input id="radId" placeholder="e.g. dr.smith" autocomplete="off" />
+            </div>
+            <div class="row">
+              <label for="studyRef">Study reference</label>
+              <input id="studyRef" placeholder="STUDY-2026-0042" autocomplete="off" />
+            </div>
+            <div class="row">
+              <label for="mriFile">MRI image (PNG, JPG, BMP, TIFF)</label>
+              <input id="mriFile" type="file" accept="image/*" />
+            </div>
+            <div class="row">
+              <label><input type="checkbox" id="heatmapChk" checked /> Include Grad-CAM heatmap</label>
+            </div>
+            <button class="primary" id="btnAnalyze">Run analysis</button>
+            <div class="msg" id="analyzeMsg"></div>
+          </div>
+          <div>
+            <div class="row">
+              <label>Uploaded preview</label>
+              <img id="preview" class="preview" alt="MRI preview" hidden />
+              <div id="previewPlaceholder" class="muted">No image selected.</div>
+            </div>
+          </div>
+        </div>
+        <div id="results" hidden style="margin-top: 1.25rem">
+          <h2>Results</h2>
+          <div class="grid two">
+            <div>
+              <div id="verdictPill" class="pill warn">—</div>
+              <p id="verdictText" style="margin: 0.75rem 0 0.25rem; font-size: 1.05rem"></p>
+              <p class="muted" id="modelVersion" style="margin: 0"></p>
+              <div id="probBars" style="margin-top: 1rem"></div>
+              <ul class="limitations" id="limitations"></ul>
+            </div>
+            <div>
+              <label>Grad-CAM overlay (model attention)</label>
+              <img id="heatmapImg" class="heatmap" alt="Grad-CAM heatmap" hidden />
+              <div id="heatmapPlaceholder" class="muted">Heatmap not requested or unavailable.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-studies">
+        <div class="toolbar" style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem">
+          <button class="ghost" id="btnRefreshStudies">Refresh</button>
+        </div>
+        <h2>Recent studies</h2>
+        <div style="overflow: auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Study ref</th>
+                <th>Radiologist</th>
+                <th>Finding</th>
+                <th>Confidence</th>
+              </tr>
+            </thead>
+            <tbody id="studiesBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-audit">
+        <button class="ghost" id="btnRefreshAudit">Refresh audit log</button>
+        <h2 style="margin-top: 0.75rem">Audit trail</h2>
+        <div style="overflow: auto">
+          <table>
+            <thead>
+              <tr><th>Time</th><th>Actor</th><th>Action</th><th>Detail</th></tr>
+            </thead>
+            <tbody id="auditBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-about">
+        <h2>System architecture</h2>
+        <p class="muted" style="line-height: 1.55">
+          <strong>Model:</strong> ResNet-18 fine-tuned for 4-class MRI classification
+          (glioma, meningioma, pituitary, no tumor).<br />
+          <strong>Preprocessing:</strong> CLAHE contrast enhancement, resize to 224×224, ImageNet normalization.<br />
+          <strong>Explainability:</strong> Grad-CAM on layer4 highlights regions influencing the prediction.<br />
+          <strong>Storage:</strong> SQLite audit log of studies and actions (local only).
+        </p>
+        <h2>Known limitations</h2>
+        <ul class="limitations">
+          <li>Single 2D slice analysis — does not replace full volumetric review or multi-sequence MRI.</li>
+          <li>Performance depends on scanner, sequence, and patient population; requires local validation.</li>
+          <li>Grad-CAM shows correlation with model weights, not histologically confirmed tumor extent.</li>
+          <li>Synthetic demo weights must be replaced with hospital-authorized training data for real deployment.</li>
+        </ul>
+      </section>
+    </main>
+    <script>
+      const tabs = [
+        { id: "analyze", label: "Analyze" },
+        { id: "studies", label: "Studies" },
+        { id: "audit", label: "Audit" },
+        { id: "about", label: "About" },
+      ];
+
+      const el = (id) => document.getElementById(id);
+
+      function showTab(name) {
+        tabs.forEach((t) => el("panel-" + t.id)?.classList.toggle("active", t.id === name));
+        document.querySelectorAll("nav button").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
+        if (name === "studies") loadStudies();
+        if (name === "audit") loadAudit();
+      }
+
+      function buildNav() {
+        const nav = el("tabs");
+        tabs.forEach((t) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.textContent = t.label;
+          b.dataset.tab = t.id;
+          b.addEventListener("click", () => showTab(t.id));
+          nav.appendChild(b);
+        });
+        nav.querySelector("button").classList.add("active");
+      }
+
+      async function checkHealth() {
+        try {
+          const h = await fetch("/api/health").then((r) => r.json());
+          const line = el("healthLine");
+          if (h.model_loaded) {
+            line.innerHTML = '<span class="status-dot ok"></span>Model loaded — ' + h.device;
+          } else if (h.status === "needs_training") {
+            line.innerHTML = '<span class="status-dot bad"></span>Model not trained. Run run.bat or scripts/setup_lab.py';
+          }
+        } catch {
+          el("healthLine").textContent = "API unreachable.";
+        }
+      }
+
+      el("mriFile").addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        el("preview").src = url;
+        el("preview").hidden = false;
+        el("previewPlaceholder").hidden = true;
+      });
+
+      el("btnAnalyze").addEventListener("click", async () => {
+        const msg = el("analyzeMsg");
+        msg.textContent = "";
+        msg.className = "msg";
+        const radId = el("radId").value.trim();
+        const studyRef = el("studyRef").value.trim();
+        const file = el("mriFile").files[0];
+        if (!radId || !studyRef || !file) {
+          msg.textContent = "Radiologist ID, study reference, and MRI file are required.";
+          msg.className = "msg error";
+          return;
+        }
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("radiologist_id", radId);
+        fd.append("study_ref", studyRef);
+        fd.append("include_heatmap", el("heatmapChk").checked ? "true" : "false");
+        el("btnAnalyze").disabled = true;
+        try {
+          const res = await fetch("/api/analyze", { method: "POST", body: fd });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || res.statusText);
+          }
+          const data = await res.json();
+          renderResults(data);
+          msg.textContent = "Analysis complete. Study ID " + data.study_id;
+          msg.className = "msg ok";
+        } catch (e) {
+          msg.textContent = String(e.message || e);
+          msg.className = "msg error";
+        } finally {
+          el("btnAnalyze").disabled = false;
+        }
+      });
+
+      function renderResults(data) {
+        el("results").hidden = false;
+        const pill = el("verdictPill");
+        if (data.tumor_detected) {
+          pill.textContent = "Tumor suspected";
+          pill.className = "pill bad";
+        } else {
+          pill.textContent = "No tumor class selected";
+          pill.className = "pill ok";
+        }
+        el("verdictText").textContent = data.predicted_label + " (" + (data.confidence * 100).toFixed(1) + "% confidence)";
+        el("modelVersion").textContent = "Model: " + data.model_version;
+        el("probBars").innerHTML = Object.entries(data.probabilities)
+          .map(([k, v]) => {
+            const pct = (v * 100).toFixed(1);
+            return '<div class="prob-row"><div class="prob-label"><span>' + k + '</span><span>' + pct + '%</span></div><div class="prob-bar"><div class="prob-fill" style="width:' + pct + '%"></div></div></div>';
+          })
+          .join("");
+        el("limitations").innerHTML = (data.limitations || []).map((l) => "<li>" + l + "</li>").join("");
+        if (data.heatmap_base64) {
+          el("heatmapImg").src = "data:image/png;base64," + data.heatmap_base64;
+          el("heatmapImg").hidden = false;
+          el("heatmapPlaceholder").hidden = true;
+        } else {
+          el("heatmapImg").hidden = true;
+          el("heatmapPlaceholder").hidden = false;
+        }
+      }
+
+      async function loadStudies() {
+        const body = el("studiesBody");
+        body.innerHTML = "";
+        try {
+          const rows = await fetch("/api/studies").then((r) => r.json());
+          for (const r of rows) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = "<td>" + r.created_at.slice(0, 19).replace("T", " ") + "</td><td>" + r.study_ref + "</td><td>" + r.radiologist_id + "</td><td>" + r.predicted_label + "</td><td>" + (r.confidence * 100).toFixed(1) + "%</td>";
+            body.appendChild(tr);
+          }
+        } catch {
+          body.innerHTML = '<tr><td colspan="5" class="muted">Could not load studies.</td></tr>';
+        }
+      }
+
+      async function loadAudit() {
+        const body = el("auditBody");
+        body.innerHTML = "";
+        try {
+          const rows = await fetch("/api/audit").then((r) => r.json());
+          for (const r of rows) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = "<td>" + r.created_at.slice(0, 19).replace("T", " ") + "</td><td>" + r.actor + "</td><td>" + r.action + "</td><td>" + (r.detail || "") + "</td>";
+            body.appendChild(tr);
+          }
+        } catch {
+          body.innerHTML = '<tr><td colspan="4" class="muted">Could not load audit log.</td></tr>';
+        }
+      }
+
+      el("btnRefreshStudies").addEventListener("click", loadStudies);
+      el("btnRefreshAudit").addEventListener("click", loadAudit);
+      buildNav();
+      checkHealth();
+    </script>
+  </body>
+</html>

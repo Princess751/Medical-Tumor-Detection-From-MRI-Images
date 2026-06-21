@@ -1,0 +1,4 @@
+# Full dependency list. On slow networks use:  powershell -File scripts\install_deps.ps1
+# (installs in stages with long timeouts; PyTorch from the CPU wheel index)
+-r requirements-web.txt
+-r requirements-ml.txt
