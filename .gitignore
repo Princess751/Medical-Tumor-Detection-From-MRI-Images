@@ -1,0 +1,9 @@
+weights/
+output/
+data/studies.db
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+*.pt.meta.json
