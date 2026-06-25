@@ -1,7 +1,2 @@
-<<<<<<< HEAD
-# ML / imaging — install AFTER requirements-web.txt and PyTorch (see install_deps.ps1)
+# ML / imaging - install AFTER requirements-web.txt and PyTorch (see install_deps.ps1)
 opencv-python-headless==4.10.0.84
-=======
-# ML / imaging — install AFTER requirements-web.txt and PyTorch (see install_deps.ps1)
-opencv-python-headless==4.10.0.84
->>>>>>> 95eb9d2250568a0e2a5d1de777831210e935debd
