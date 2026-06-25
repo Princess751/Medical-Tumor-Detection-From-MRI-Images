@@ -1,0 +1,3 @@
+[submodule "MRI-Tumor-Detection"]
+    path = MRI-Tumor-Detection
+    url = https://github.com/Princess751/MRI-Tumor-Detection.git
