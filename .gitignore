@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 weights/
 output/
 data/studies.db
@@ -8,14 +7,4 @@ __pycache__/
 venv/
 .env
 *.pt.meta.json
-=======
-weights/
-output/
-data/studies.db
-__pycache__/
-*.pyc
-.venv/
-venv/
-.env
-*.pt.meta.json
->>>>>>> 95eb9d2250568a0e2a5d1de777831210e935debd
+
