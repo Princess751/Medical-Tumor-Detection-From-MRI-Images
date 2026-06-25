@@ -1,0 +1,28 @@
+services:
+  tumor-detection-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mri-tumor-detection
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_DEBUG=False
+      - PORT=5000
+      - MODEL_PATH=/app/models/tumor_model.h5
+    volumes:
+      - ./models:/app/models
+      - ./uploads:/app/uploads
+    restart: unless-stopped
+    networks:
+      - tumor-detection-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  tumor-detection-network:
+    driver: bridge
